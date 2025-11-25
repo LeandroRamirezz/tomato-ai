@@ -220,7 +220,7 @@ function App() {
                   >
                     {models.classification.map(m => (
                       <option key={m.name} value={m.name}>
-                        {m.name.toUpperCase()} ({m.num_classes} clases)
+                        {m.name.toUpperCase()} 
                       </option>
                     ))}
                   </select>
@@ -332,7 +332,7 @@ function App() {
                       <div style={{fontWeight:'bold', textTransform:'capitalize'}}>{h.type}</div>
                       <div style={{fontSize:'0.75rem', background:'#eee', padding:'2px 8px', borderRadius:'10px', color:'#555'}}>
                         {/* AQUÍ MOSTRAMOS EL MODELO */}
-                        🤖 {h.type === 'comparison' ? (h.models?.join(', ') || 'Varios') : (h.model || 'YOLO')}
+                        🤖 {h.type === 'comparison' ? (h.models?.join(',') || 'Varios') : (h.model || 'YOLO')}
                       </div>
                     </div>
                     <div style={{fontSize:'0.85rem', color:'#666', marginTop:'2px'}}>
