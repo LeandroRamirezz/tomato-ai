@@ -38,75 +38,61 @@ function App() {
   }, []);
 
   return (
-    <div className="app">
+    <div className="app-container">
       <header className="app-header">
         <h1>🍅 TomatoAI</h1>
         <p>Sistema Inteligente de Clasificación Agrícola</p>
-        <div className="header-stats">
-          {serverStatus === 'online' && (
-            <span style={{color: '#2a9d8f', display: 'flex', alignItems: 'center', gap: '5px'}}>
-              ● Conectado
-            </span>
-          )}
-          {serverStatus === 'offline' && (
-            <span style={{color: '#e63946', display: 'flex', alignItems: 'center', gap: '5px'}}>
-              ● Backend desconectado
-            </span>
-          )}
-          {serverStatus === 'checking' && (
-            <span style={{color: '#457b9d', display: 'flex', alignItems: 'center', gap: '5px'}}>
-              ● Conectando...
-            </span>
-          )}
-        </div>
+        {serverStatus === 'offline' && (
+          <span style={{background: '#fee2e2', color: '#ef4444', padding: '5px 10px', borderRadius: '20px', fontSize: '0.8rem'}}>
+            ⚠️ Backend desconectado
+          </span>
+        )}
       </header>
 
-      <div className="container">
+      <main className="main-card">
         <div className="tabs">
           <button 
-            className={`tab ${activeTab === 'classification' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'classification' ? 'active' : ''}`}
             onClick={() => setActiveTab('classification')}
           >
             🎯 Clasificación
           </button>
           <button 
-            className={`tab ${activeTab === 'segmentation' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'segmentation' ? 'active' : ''}`}
             onClick={() => setActiveTab('segmentation')}
           >
             ✂️ Segmentación
           </button>
           <button 
-            className={`tab ${activeTab === 'comparison' ? 'active' : ''}`}
-            onClick={() => setActiveTab('comparison')}
-          >
-            ⚖️ Comparar
-          </button>
+              className={`tab-btn ${activeTab === 'comparison' ? 'active' : ''}`}
+              onClick={() => setActiveTab('comparison')}
+            >
+              ⚖️ Comparar
+            </button>
           <button 
-            className={`tab ${activeTab === 'history' ? 'active' : ''}`}
+            className={`tab-btn ${activeTab === 'history' ? 'active' : ''}`}
             onClick={() => setActiveTab('history')}
           >
             📜 Historial
           </button>
         </div>
 
-        <div className="content">
+        <div style={{ padding: '30px' }}>
           {activeTab === 'classification' && (
-            <ClassificationView models={models} apiUrl={API_URL} />
+            <ClassificationView models={models} />
           )}
           
           {activeTab === 'segmentation' && (
-            <SegmentationView apiUrl={API_URL} />
+            <SegmentationView />
           )}
-          
           {activeTab === 'comparison' && (
-            <ComparisonView apiUrl={API_URL} />
+            <ComparisonView />
           )}
-          
           {activeTab === 'history' && (
-            <HistoryView apiUrl={API_URL} />
+            <HistoryView />
           )}
         </div>
-      </div>
+      </main>
     </div>
   );
 }
