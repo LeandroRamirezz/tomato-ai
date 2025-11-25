@@ -13,14 +13,16 @@ def health_check():
     return jsonify({
         'status': 'healthy',
         'db_status': db_service.is_connected(),
+        # Muestra solo los modelos que ya se han cargado en RAM
         'models_loaded': list(model_manager.classification_models.keys())
     })
 
 @api.route('/models', methods=['GET'])
 def get_models():
-    # Devolvemos la lista estática porque no queremos cargar todo solo para listar
+    # Lista estática para que el frontend sepa qué opciones mostrar
+    # sin tener que cargar los modelos pesados todavía.
     models_list = [
-        {'name': 'resnet50', 'type': 'classification', 'num_classes': 10}, # Ajusta num_classes si quieres
+        {'name': 'resnet50', 'type': 'classification', 'num_classes': 10},
         {'name': 'mobilenetv2', 'type': 'classification', 'num_classes': 10},
         {'name': 'efficientnetb2', 'type': 'classification', 'num_classes': 10}
     ]
@@ -28,22 +30,28 @@ def get_models():
 
 @api.route('/classify', methods=['POST'])
 def classify_image():
-    if 'file' not in request.files: return jsonify({'error': 'No file'}), 400
+    if 'file' not in request.files: 
+        return jsonify({'error': 'No file provided'}), 400
     
     file = request.files['file']
     model_name = request.form.get('model', 'resnet50')
     
-    if model_name not in model_manager.classification_models:
-        return jsonify({'error': 'Modelo no encontrado'}), 404
-        
+    # 1. Guardar archivo primero (¡Esto faltaba!)
+    filepath = save_uploaded_file(file)
+    if not filepath:
+        return jsonify({'error': 'Invalid file type'}), 400
+    
+    # 2. Obtener modelo usando Lazy Loading
+    # (Si no está en RAM, lo carga ahora)
     model = model_manager.get_classification_model(model_name)
     
     if not model:
-        return jsonify({'error': 'Modelo no disponible o falló al cargar'}), 503
+        return jsonify({'error': f'Model {model_name} not available'}), 503
     
     try:
         start = time.time()
-        model = model_manager.classification_models[model_name]
+        
+        # 3. Predecir
         result = model.predict(filepath)
         elapsed = time.time() - start
         
@@ -53,7 +61,7 @@ def classify_image():
             'processing_time': f"{elapsed:.2f}s"
         }
         
-        # Guardar en BD de forma asíncrona o directa
+        # 4. Guardar en Base de Datos
         db_service.save_prediction({
             'type': 'classification',
             'model': model_name,
@@ -62,7 +70,9 @@ def classify_image():
         })
         
         return jsonify(response)
+    
     except Exception as e:
+        print(f"Error en clasificación: {e}")
         return jsonify({'error': str(e)}), 500
 
 @api.route('/image/<filename>')
@@ -73,6 +83,7 @@ def get_image(filename):
     if (RESULTS_FOLDER / filename).exists():
         return send_file(str(RESULTS_FOLDER / filename))
     return jsonify({'error': 'Imagen no encontrada'}), 404
+
 @api.route('/compare', methods=['POST'])
 def compare_models():
     """Compara todos los modelos de clasificación cargados"""
@@ -90,11 +101,14 @@ def compare_models():
         start = time.time()
         comparisons = {}
         
-        # Iterar sobre todos los modelos cargados en el manager
+        # Iterar sobre la lista de modelos conocidos
         model_names = ['resnet50', 'mobilenetv2', 'efficientnetb2']
+        
         for name in model_names:
+            # Cargar modelo bajo demanda
             model = model_manager.get_classification_model(name)
             if model:
+                # Si carga con éxito, predecir
                 result = model.predict(filepath, top_k=top_k)
                 comparisons[name] = result
             
@@ -125,7 +139,10 @@ def compare_models():
 @api.route('/segment', methods=['POST'])
 def segment_image():
     """Ruta para segmentación con YOLO"""
+    
+    # Cargar YOLO bajo demanda
     yolo = model_manager.get_segmentation_model()
+    
     if not yolo:
         return jsonify({'error': 'Modelo de segmentación no disponible'}), 503
 
@@ -146,21 +163,17 @@ def segment_image():
         filename = f"seg_{filepath.name}"
         result_path = RESULTS_FOLDER / filename
         
-        # Predicción usando YOLO (ultralytics)
-        # Nota: model_manager.segmentation_model es la instancia de YOLO cargada
-        results = model_manager.segmentation_model.predict(
+        # Predicción usando YOLO
+        results = yolo.predict(
             source=str(filepath),
             conf=conf,
             save=True,
-            project=str(RESULTS_FOLDER.parent), # Truco para que ultralytics guarde donde queremos
-            name='results', # Carpeta temp
+            project=str(RESULTS_FOLDER.parent), 
+            name='results', 
             exist_ok=True,
             verbose=False
         )
         
-        # Ultralytics guarda automáticamente, pero para tener control total
-        # a veces es mejor usar plot() y guardar manual con cv2.
-        # Vamos a hacerlo manual para asegurar la ruta exacta:
         result = results[0]
         img_with_masks = result.plot()
         import cv2
@@ -181,7 +194,7 @@ def segment_image():
         response = {
             'num_detections': len(detections),
             'detections': detections,
-            'result_image': filename, # El frontend usará /api/image/seg_...
+            'result_image': filename,
             'processing_time': f"{elapsed:.2f}s"
         }
 
@@ -198,8 +211,6 @@ def segment_image():
     except Exception as e:
         print(f"Error en segmentación: {e}")
         return jsonify({'error': str(e)}), 500
-    
-# ... imports y rutas anteriores ...
 
 @api.route('/predictions', methods=['GET'])
 def get_predictions():
@@ -208,19 +219,16 @@ def get_predictions():
         return jsonify({'error': 'Base de datos no disponible'}), 503
     
     try:
-        # Leer parámetros de la URL (?limit=10&type=classification)
         limit = int(request.args.get('limit', 50))
         pred_type = request.args.get('type')
         model = request.args.get('model')
         
-        # Construir filtros
         filters = {}
         if pred_type:
             filters['type'] = pred_type
         if model:
             filters['model'] = model
             
-        # Usar el servicio de DB que ya creamos
         predictions = db_service.get_all_predictions(limit=limit, filters=filters)
         
         return jsonify({
@@ -238,14 +246,13 @@ def get_stats():
         return jsonify({'error': 'Base de datos no disponible'}), 503
     
     try:
-        # Obtener estadísticas básicas de la DB
         db_stats = db_service.get_stats()
         
-        # Enriquecer con info de los modelos cargados en memoria
         stats = {
             'total_predictions': db_stats.get('total', 0),
             'by_type': db_stats.get('by_type', {}),
             'available_models': {
+                # Muestra qué modelos están cargados en este momento
                 'classification': list(model_manager.classification_models.keys()),
                 'segmentation': ['yolov11'] if model_manager.segmentation_model else []
             }
