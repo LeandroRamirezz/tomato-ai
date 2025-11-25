@@ -1,432 +1,122 @@
 /* ============================================
-   TOMATO CLASSIFIER - DISEÑO RESPONSIVE BLINDADO
+   TOMATO CLASSIFIER - DISEÑO RESPONSIVE FINAL V4
    ============================================ */
 
 :root {
   --primary: #e63946;
-  --primary-hover: #d00000;
   --secondary: #1d3557;
   --accent: #457b9d;
-  --success: #2a9d8f;
   --background: #f8f9fa;
   --surface: #ffffff;
   --text-main: #212529;
   --text-muted: #6c757d;
   --border: #dee2e6;
-
-  --radius-sm: 6px;
-  --radius-md: 12px;
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.05);
-  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-  --transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  --radius: 12px;
+  --shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
 }
 
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
+html, body {
+  width: 100%; max-width: 100vw; overflow-x: hidden; margin: 0; padding: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: var(--background); color: var(--text-main); line-height: 1.6;
 }
 
-body {
-  font-family: "Inter", system-ui, -apple-system, sans-serif;
-  background-color: var(--background);
-  color: var(--text-main);
-  line-height: 1.6;
-  /* --- FIX: Evita que la página entera se mueva a los lados --- */
-  overflow-x: hidden;
-  width: 100%;
-}
-
-/* ============================================
-   LAYOUT
-   ============================================ */
+*, *::before, *::after { box-sizing: border-box; }
 
 .app {
-  min-height: 100vh;
-  padding: 40px 20px;
-  max-width: 1200px;
-  margin: 0 auto;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
+  min-height: 100vh; padding: 20px; width: 100%; max-width: 1200px; margin: 0 auto;
+  display: flex; flex-direction: column;
 }
 
-/* Header */
-.app-header {
-  text-align: center;
-  margin-bottom: 30px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid var(--border);
-}
+.app-header { text-align: center; margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border); }
+.app-header h1 { font-size: clamp(1.8rem, 5vw, 2.5rem); font-weight: 800; color: var(--secondary); margin: 0 0 10px 0; }
+.app-header p { color: var(--text-muted); margin: 0 auto 15px; }
 
-.app-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: var(--secondary);
-  margin-bottom: 8px;
-  line-height: 1.2;
-}
-
-.app-header p {
-  color: var(--text-muted);
-  font-size: 1.1rem;
-  max-width: 600px;
-  margin: 0 auto 20px;
-}
-
-.header-stats {
-  display: inline-flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  background: var(--surface);
-  padding: 8px 16px;
-  border-radius: 50px;
-  box-shadow: var(--shadow-sm);
-  border: 1px solid var(--border);
-}
-
-/* Contenedor Principal */
 .container {
-  background: var(--surface);
-  border-radius: var(--radius-md);
-  box-shadow: var(--shadow-md);
-  border: 1px solid var(--border);
-  /* --- FIX: Mantiene las esquinas y evita desborde --- */
-  overflow: hidden;
-  display: flex;
-  flex-direction: column;
-  width: 100%;
-  max-width: 100%;
+  background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow);
+  border: 1px solid var(--border); width: 100%; overflow: hidden;
+  display: flex; flex-direction: column;
 }
 
-/* ============================================
-   NAVEGACIÓN (TABS) - FIX DE SCROLL
-   ============================================ */
-
+/* --- NAVEGACIÓN ESCRITORIO (Tabs) --- */
 .tabs {
-  display: flex;
-  background: #f1f3f5;
-  padding: 4px 4px 0;
-  border-bottom: 1px solid var(--border);
-  gap: 4px;
-
-  /* --- FIX: Configuración crítica para scroll --- */
-  overflow-x: auto; /* Permite deslizar */
-  white-space: nowrap; /* Evita saltos de línea */
-  -webkit-overflow-scrolling: touch; /* Suavidad en iPhone */
-
-  /* Ocultar barra de scroll */
-  scrollbar-width: none;
+  display: flex; background: #f1f3f5; padding: 5px; border-bottom: 1px solid var(--border); gap: 5px;
 }
-
-.tabs::-webkit-scrollbar {
-  display: none;
-}
-
 .tab {
-  /* En escritorio se expanden, PERO en móvil lo anularemos abajo */
-  flex: 1;
-  padding: 14px 20px;
-  border: none;
-  background: transparent;
-  color: var(--text-muted);
-  font-weight: 600;
-  font-size: 0.95rem;
-  cursor: pointer;
-  transition: var(--transition);
-  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
-  position: relative;
-  /* --- FIX: Evita que el texto se rompa --- */
-  min-width: fit-content;
+  flex: 1; padding: 12px 20px; border: none; background: transparent; color: var(--text-muted);
+  font-weight: 600; cursor: pointer; border-radius: 8px; transition: all 0.2s; white-space: nowrap;
+}
+.tab:hover { background: rgba(0,0,0,0.05); color: var(--secondary); }
+.tab.active { background: var(--surface); color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+
+/* --- NAVEGACIÓN MÓVIL (Select) --- */
+.mobile-nav-container {
+  display: none; /* Oculto en escritorio */
+  padding: 15px;
+  background: #f1f3f5;
+  border-bottom: 1px solid var(--border);
+}
+.mobile-nav-select {
+  width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px;
+  font-size: 1rem; font-weight: 600; color: var(--secondary); background: white;
+  appearance: none; /* Quita flecha por defecto */
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231d3557' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+  background-repeat: no-repeat; background-position: right 15px center; background-size: 18px;
 }
 
-.tab:hover {
-  color: var(--secondary);
-  background: rgba(0, 0, 0, 0.03);
-}
+.content { padding: 20px; width: 100%; }
 
-.tab.active {
-  background: var(--surface);
-  color: var(--primary);
-  box-shadow: 0 -2px 5px rgba(0, 0, 0, 0.02);
-}
-
-.tab.active::after {
-  content: "";
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: var(--primary);
-}
-
-/* ============================================
-   CONTENIDO E IMÁGENES - FIX DE DESBORDE
-   ============================================ */
-
-.content {
-  padding: 40px;
-  flex: 1;
-  width: 100%;
-  /* --- FIX: Asegura que el contenido no empuje el ancho --- */
-  max-width: 100vw;
-  overflow-x: hidden;
-}
-
-.preview-section,
-.segmentation-result {
-  text-align: center;
-  margin: 30px 0;
-  background: #f8f9fa;
-  padding: 20px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--border);
-
-  /* --- FIX: Contenedor seguro para imágenes --- */
-  width: 100%;
+/* --- ÁREA DE CARGA / VISTA PREVIA (Unificada) --- */
+.image-area-container {
+  min-height: 250px; /* Altura fija para evitar saltos */
+  display: flex; justify-content: center; align-items: center;
+  background: #f8f9fa; border: 2px dashed #cbd5e1; border-radius: var(--radius);
+  margin-bottom: 25px; position: relative; /* Para posicionar la X */
   overflow: hidden;
 }
 
-/* --- FIX MAESTRO PARA IMÁGENES --- */
-.preview-image,
-.result-image,
-img {
-  max-width: 100% !important; /* Nunca exceder el ancho del padre */
-  width: auto;
-  height: auto;
-  max-height: 450px;
-  border-radius: var(--radius-sm);
-  box-shadow: var(--shadow-md);
-  object-fit: contain; /* Asegura que se vea completa */
-  display: block;
-  margin: 0 auto;
+.upload-placeholder {
+  text-align: center; padding: 30px; display: flex; flex-direction: column; align-items: center; gap: 15px; width: 100%;
 }
 
-/* ============================================
-   CONTROLES
-   ============================================ */
-
-.upload-section {
-  background: #f8f9fa;
-  border: 2px dashed #cbd5e1;
-  border-radius: var(--radius-md);
-  padding: 30px;
-  text-align: center;
-  margin-bottom: 30px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 15px;
-  flex-wrap: wrap;
+.preview-container-wrapper {
+  width: 100%; height: 100%; display: flex; justify-content: center; align-items: center; background: #000;
+}
+.preview-image-main {
+  width: auto; height: auto; max-width: 100%; max-height: 400px; object-fit: contain;
 }
 
-.btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  padding: 12px 24px;
-  border-radius: var(--radius-sm);
-  font-weight: 600;
-  border: none;
-  cursor: pointer;
-  transition: var(--transition);
-  white-space: nowrap;
+/* BOTÓN 'X' PARA CERRAR */
+.close-btn {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(0, 0, 0, 0.6); color: white; border: none;
+  width: 36px; height: 36px; border-radius: 50%;
+  font-size: 20px; display: flex; align-items: center; justify-content: center;
+  cursor: pointer; transition: background 0.2s; z-index: 10;
 }
+.close-btn:hover { background: rgba(230, 57, 70, 0.9); }
 
-.btn-primary {
-  background: var(--primary);
-  color: white;
-}
-.btn-secondary {
-  background: white;
-  border: 1px solid var(--border);
-  color: var(--secondary);
-}
-.btn-danger {
-  background: #fff5f5;
-  color: #e03131;
-  border: 1px solid #ffc9c9;
-}
-.btn-large {
-  width: 100%;
-  padding: 16px;
-  margin-top: 20px;
-}
-
-.model-selector,
-.confidence-slider {
-  margin-bottom: 25px;
-  background: var(--surface);
-  padding: 20px;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-}
-
-select {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ced4da;
-  border-radius: var(--radius-sm);
-  background: white;
-}
-input[type="range"] {
-  width: 100%;
-}
-
-/* ============================================
-   RESULTADOS
-   ============================================ */
-
-.results {
-  margin-top: 40px;
-  width: 100%;
-}
+/* CONTROLES Y RESULTADOS */
+.control-panel { background: var(--surface); padding: 20px; border: 1px solid var(--border); border-radius: var(--radius); margin-bottom: 20px; }
+.btn { width: 100%; padding: 14px; border-radius: 8px; font-weight: 600; border: none; cursor: pointer; font-size: 1rem; }
+.btn-primary { background: var(--primary); color: white; }
+.btn-secondary { background: white; border: 1px solid var(--border); color: var(--secondary); }
+select.model-select, input[type="range"] { width: 100%; margin-top: 10px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; }
 
 .result-card {
-  border: 1px solid var(--border);
-  border-radius: var(--radius-md);
-  overflow: hidden;
-  width: 100%;
+  background: #1d3557; color: white; padding: 25px; text-align: center; border-radius: var(--radius); margin-top: 20px;
 }
-
-.top-prediction {
-  background: linear-gradient(135deg, var(--secondary) 0%, #162840 100%);
-  color: white;
-  padding: 30px;
-  text-align: center;
-  word-break: break-word;
-}
-
-.top-prediction .class-name {
-  font-size: 2.2rem;
-  font-weight: 800;
-  text-transform: capitalize;
-  margin-bottom: 5px;
-  color: white;
-}
-
-.prediction-item {
-  display: flex;
-  align-items: center;
-  padding: 15px 25px;
-  border-bottom: 1px solid var(--border);
-  gap: 15px;
-  flex-wrap: wrap;
-}
-
-.confidence-bar-container {
-  flex: 1;
-  min-width: 100px;
-}
-.confidence-bar {
-  width: 100%;
-  height: 6px;
-  background: #e9ecef;
-  border-radius: 3px;
-  overflow: hidden;
-}
-.confidence-fill {
-  height: 100%;
-  background: var(--accent);
-}
-
-.comparison-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-  gap: 20px;
-  width: 100%;
-}
-
-.comparison-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 15px;
-  width: 100%;
-}
-
-/* Historial */
-.history-item {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-left: 4px solid var(--accent);
-  border-radius: var(--radius-sm);
-  padding: 20px;
-  overflow: hidden;
-}
+.result-image-container { margin-top: 20px; text-align: center; }
+.result-image { max-width: 100%; border-radius: 8px; }
 
 /* ============================================
-   MEDIA QUERIES (MÓVIL - MÁGICOS)
+   MEDIA QUERY: MÓVILES
    ============================================ */
-
 @media (max-width: 768px) {
-  .app {
-    padding: 20px 10px;
-  }
-  .app-header h1 {
-    font-size: 1.8rem;
-  }
-  .content {
-    padding: 20px;
-  }
-
-  /* --- FIX CRÍTICO: TABS DESLIZABLES EN MÓVIL --- */
-  .tabs {
-    justify-content: flex-start; /* Alinea al inicio */
-  }
-
-  .tab {
-    /* flex: 0 0 auto -> Impide que se encojan o estiren */
-    /* Esto fuerza al navegador a usar el scroll horizontal */
-    flex: 0 0 auto !important;
-    padding: 12px 20px;
-    font-size: 0.95rem;
-  }
-
-  /* --- FIX CRÍTICO: IMÁGENES Y CONTENEDORES --- */
-  .upload-section {
-    flex-direction: column;
-    padding: 20px;
-  }
-  .file-input-label,
-  .file-input-label .btn {
-    width: 100%;
-  }
-
-  .preview-image,
-  .result-image {
-    max-height: 300px; /* Altura controlada en móvil */
-    width: 100% !important; /* Forzar ancho */
-    object-fit: contain;
-  }
-
-  /* Previene Zoom en inputs en iPhone */
-  select,
-  input[type="text"],
-  input[type="number"] {
-    font-size: 16px !important;
-  }
-
-  /* Ajustes generales */
-  .prediction-item {
-    padding: 15px;
-    font-size: 0.9rem;
-  }
-  .top-prediction .class-name {
-    font-size: 1.6rem;
-  }
-  .comparison-grid {
-    grid-template-columns: 1fr;
-  } /* Una sola columna */
-
-  .history-header {
-    flex-direction: column;
-    gap: 5px;
-  }
-  .history-content {
-    font-size: 0.9rem;
-  }
+  .app { padding: 10px; } .content { padding: 15px; }
+  /* Ocultar tabs, mostrar select */
+  .tabs { display: none; }
+  .mobile-nav-container { display: block; }
+  .image-area-container { min-height: 200px; border-radius: 8px; }
+  .preview-image-main { max-height: 300px; }
 }
