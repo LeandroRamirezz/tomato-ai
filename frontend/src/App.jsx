@@ -6,7 +6,7 @@ import './App.css'
 const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 const API_URL = isLocal 
   ? 'http://localhost:5000/api' 
-  : 'https://leandroramirez1-tomato-backend.hf.space/api'; // Tu URL de Hugging Face
+  : 'https://leandroramirez1-tomato-backend.hf.space/api';
 
 console.log("🌍 Conectando a:", API_URL);
 
@@ -24,7 +24,6 @@ function App() {
   const [history, setHistory] = useState([])
   const [stats, setStats] = useState(null)
   
-  // Estado para versión móvil
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
 
   // --- EFECTOS ---
@@ -32,7 +31,6 @@ function App() {
     const handleResize = () => setIsMobile(window.innerWidth <= 768);
     window.addEventListener('resize', handleResize);
     
-    // Carga inicial
     loadModels();
     loadHistory();
     loadStats();
@@ -40,22 +38,32 @@ function App() {
     return () => window.removeEventListener('resize', handleResize);
   }, [])
 
+  // --- CAMBIO DE PESTAÑA (NUEVO: LIMPIA RESULTADOS) ---
+  const changeTab = (newTab) => {
+    setActiveTab(newTab);
+    setResult(null); // 🧹 Borrar resultado anterior
+    setError(null);  // 🧹 Borrar errores anteriores
+    
+    // Si vamos al historial, recargamos los datos
+    if (newTab === 'history') {
+      loadHistory();
+    }
+  };
+
   // --- FUNCIONES DE CARGA ---
   const loadModels = async () => {
     try {
       const response = await axios.get(`${API_URL}/models`)
-      console.log("Modelos cargados:", response.data);
       setModels({
         classification: response.data.classification_models || [],
         segmentation: response.data.segmentation_models || []
       })
-      // Seleccionar por defecto si hay modelos
       if (response.data.classification_models?.length > 0) {
         setSelectedModel('mobilenetv2') 
       }
     } catch (err) {
       console.error('Error cargando modelos:', err)
-      setError('No se pudo conectar con el servidor para cargar modelos.')
+      setError('No se pudo conectar con el servidor.')
     }
   }
 
@@ -103,7 +111,7 @@ function App() {
         headers: { 'Content-Type': 'multipart/form-data' }
       })
       setResult(res.data)
-      loadHistory() // Recargar historial tras acción
+      loadHistory()
       loadStats()
     } catch (err) {
       console.error(err)
@@ -113,9 +121,8 @@ function App() {
     }
   }
 
-  // Wrappers para las acciones específicas
   const onClassify = () => {
-    if (!selectedModel) return setError("⚠️ No hay modelo seleccionado (o no han cargado).");
+    if (!selectedModel) return setError("⚠️ No hay modelo seleccionado.");
     const fd = new FormData()
     fd.append('file', selectedFile)
     fd.append('model', selectedModel)
@@ -136,7 +143,6 @@ function App() {
     handleAction('compare', fd)
   }
 
-  // Opciones para el menú
   const navOptions = [
     { value: 'classification', label: '🎯 Clasificación' },
     { value: 'segmentation', label: '✂️ Segmentación' },
@@ -158,16 +164,13 @@ function App() {
       </header>
 
       <div className="container">
-        {/* --- NAVEGACIÓN (Dual: Select para móvil, Tabs para PC) --- */}
+        {/* --- NAVEGACIÓN --- */}
         {isMobile ? (
           <div className="mobile-nav-container">
             <select 
               className="mobile-nav-select" 
               value={activeTab} 
-              onChange={(e) => { 
-                setActiveTab(e.target.value); 
-                if(e.target.value === 'history') loadHistory(); 
-              }}
+              onChange={(e) => changeTab(e.target.value)} // USAR NUEVA FUNCIÓN
             >
               {navOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
             </select>
@@ -178,10 +181,7 @@ function App() {
               <button 
                 key={opt.value} 
                 className={`tab ${activeTab === opt.value ? 'active' : ''}`} 
-                onClick={() => { 
-                  setActiveTab(opt.value); 
-                  if(opt.value === 'history') loadHistory(); 
-                }}
+                onClick={() => changeTab(opt.value)} // USAR NUEVA FUNCIÓN
               >
                 {opt.label}
               </button>
@@ -190,18 +190,15 @@ function App() {
         )}
 
         <div className="content">
-          {/* --- ÁREA DE IMAGEN (Común para todas las pestañas menos Historial) --- */}
           {activeTab !== 'history' && (
             <div className="image-area-container" style={previewUrl ? {border: 'none', background: '#000'} : {}}>
               {!previewUrl ? (
-                // ESTADO 1: Botón de Carga (Si no hay imagen)
                 <label className="upload-placeholder">
                   <input type="file" accept="image/*" onChange={handleFileSelect} style={{display:'none'}} />
                   <span style={{fontSize: '40px'}}>📁</span>
                   <div className="btn btn-secondary">Seleccionar Imagen</div>
                 </label>
               ) : (
-                // ESTADO 2: Vista Previa con botón "X"
                 <div className="preview-container-wrapper">
                   <img src={previewUrl} alt="Preview" className="preview-image-main" />
                   <button className="close-btn" onClick={clearAll} title="Borrar imagen">✕</button>
@@ -210,9 +207,7 @@ function App() {
             </div>
           )}
 
-          {/* --- PANELES DE CONTROL (Según la pestaña activa) --- */}
-          
-          {/* 1. CLASIFICACIÓN */}
+          {/* --- CONTROLES --- */}
           {activeTab === 'classification' && (
             <div className="control-panel">
               <div className="model-selector">
@@ -233,7 +228,6 @@ function App() {
                   <p style={{color: 'orange'}}>⏳ Cargando modelos disponibles...</p>
                 )}
               </div>
-              
               <button 
                 className="btn btn-primary" 
                 onClick={onClassify} 
@@ -245,67 +239,39 @@ function App() {
             </div>
           )}
 
-          {/* 2. SEGMENTACIÓN */}
           {activeTab === 'segmentation' && (
             <div className="control-panel">
               <div className="confidence-slider">
                 <label style={{fontWeight:'600', display:'flex', justifyContent:'space-between'}}>
-                  <span>Sensibilidad de detección:</span>
-                  <span>{confidence}</span>
+                  <span>Sensibilidad:</span><span>{confidence}</span>
                 </label>
-                <input 
-                  type="range" 
-                  min="0.1" 
-                  max="0.9" 
-                  step="0.05" 
-                  value={confidence} 
-                  onChange={(e) => setConfidence(e.target.value)} 
-                />
-                <div style={{display:'flex', justifyContent:'space-between', fontSize:'0.8rem', color:'#666'}}>
-                  <span>Más objetos (Ruido)</span>
-                  <span>Solo seguros</span>
-                </div>
+                <input type="range" min="0.1" max="0.9" step="0.05" value={confidence} onChange={(e) => setConfidence(e.target.value)} />
               </div>
-
-              <button 
-                className="btn btn-primary" 
-                onClick={onSegment} 
-                disabled={!selectedFile || loading} 
-                style={{marginTop: '20px'}}
-              >
+              <button className="btn btn-primary" onClick={onSegment} disabled={!selectedFile || loading} style={{marginTop: '20px'}}>
                 {loading ? '✂️ Cortando...' : '✂️ Segmentar Tomates'}
               </button>
             </div>
           )}
 
-          {/* 3. COMPARACIÓN */}
           {activeTab === 'comparison' && (
             <div className="control-panel">
               <p style={{textAlign:'center', marginBottom:'15px', color:'#666'}}>
-                Enviaremos la imagen a <strong>todos</strong> los modelos disponibles para ver cuál tiene mayor confianza.
+                Enviaremos la imagen a <strong>todos</strong> los modelos disponibles.
               </p>
-              <button 
-                className="btn btn-primary" 
-                onClick={onCompare} 
-                disabled={!selectedFile || loading}
-              >
+              <button className="btn btn-primary" onClick={onCompare} disabled={!selectedFile || loading}>
                 {loading ? '⚖️ Comparando...' : '⚖️ Comparar Modelos'}
               </button>
             </div>
           )}
 
-          {/* --- MENSAJE DE ERROR --- */}
           {error && (
             <div className="error-message" style={{padding: '15px', color: '#721c24', background: '#f8d7da', border: '1px solid #f5c6cb', borderRadius: '8px', marginTop: '20px'}}>
               ❌ {error}
             </div>
           )}
 
-          {/* --- RESULTADOS --- */}
           {result && (
             <div className="results" style={{marginTop: '30px'}}>
-              
-              {/* RESULTADO: CLASIFICACIÓN */}
               {result.predictions && (
                 <div className="result-card">
                   <h3 style={{borderBottom:'1px solid rgba(255,255,255,0.2)', paddingBottom:'10px', marginBottom:'15px'}}>Resultado</h3>
@@ -313,30 +279,22 @@ function App() {
                   <div style={{fontSize:'1.2rem', color:'#4ade80', fontWeight:'600'}}>
                     Confianza: {(result.top_confidence * 100).toFixed(1)}%
                   </div>
-                  
-                  {/* Detalles extra */}
                   <div style={{marginTop:'20px', textAlign:'left', background:'rgba(0,0,0,0.2)', padding:'15px', borderRadius:'8px'}}>
                     <small style={{color:'#ccc', textTransform:'uppercase'}}>Otras posibilidades:</small>
                     {result.predictions.slice(1).map((p, idx) => (
                       <div key={idx} style={{display:'flex', justifyContent:'space-between', marginTop:'5px'}}>
-                        <span>{p.class}</span>
-                        <span>{p.confidence_percent}</span>
+                        <span>{p.class}</span><span>{p.confidence_percent}</span>
                       </div>
                     ))}
                   </div>
                 </div>
               )}
 
-              {/* RESULTADO: SEGMENTACIÓN */}
               {result.result_image && (
                 <div className="result-card">
                   <h3>Mapa de Detección</h3>
                   <div className="result-image-container">
-                    <img 
-                      src={`${API_URL}/image/${result.result_image}`} 
-                      alt="Segmented Result" 
-                      className="result-image" 
-                    />
+                    <img src={`${API_URL}/image/${result.result_image}`} alt="Segmented Result" className="result-image" />
                   </div>
                   <div style={{marginTop:'15px'}}>
                     <span style={{background:'#fff', color:'#333', padding:'5px 10px', borderRadius:'20px', fontWeight:'bold'}}>
@@ -346,7 +304,6 @@ function App() {
                 </div>
               )}
 
-              {/* RESULTADO: COMPARACIÓN */}
               {result.comparisons && (
                 <div className="comparison-grid" style={{marginTop:'20px'}}>
                   {Object.entries(result.comparisons).map(([name, res]) => (
@@ -361,7 +318,7 @@ function App() {
             </div>
           )}
 
-          {/* --- HISTORIAL --- */}
+          {/* --- HISTORIAL MEJORADO --- */}
           {activeTab === 'history' && (
             <div className="history-list" style={{marginTop:'20px'}}>
               {history.length === 0 && <p style={{textAlign:'center', color:'#999'}}>No hay registros recientes.</p>}
@@ -370,13 +327,21 @@ function App() {
                   <div style={{fontSize:'1.5rem'}}>
                     {h.type === 'classification' ? '🎯' : h.type === 'segmentation' ? '✂️' : '⚖️'}
                   </div>
-                  <div>
-                    <div style={{fontWeight:'bold', textTransform:'capitalize'}}>{h.type}</div>
-                    <div style={{fontSize:'0.85rem', color:'#666'}}>
+                  <div style={{flex: 1}}>
+                    <div style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
+                      <div style={{fontWeight:'bold', textTransform:'capitalize'}}>{h.type}</div>
+                      <div style={{fontSize:'0.75rem', background:'#eee', padding:'2px 8px', borderRadius:'10px', color:'#555'}}>
+                        {/* AQUÍ MOSTRAMOS EL MODELO */}
+                        🤖 {h.type === 'comparison' ? (h.models?.join(', ') || 'Varios') : (h.model || 'YOLO')}
+                      </div>
+                    </div>
+                    <div style={{fontSize:'0.85rem', color:'#666', marginTop:'2px'}}>
                       {new Date(h.timestamp).toLocaleString()}
                     </div>
-                    {h.result?.top_class && <div style={{color:'#e63946', fontWeight:'600'}}>{h.result.top_class}</div>}
-                    {h.result?.num_detections !== undefined && <div>{h.result.num_detections} objetos</div>}
+                    <div style={{marginTop:'5px'}}>
+                      {h.result?.top_class && <span style={{color:'#e63946', fontWeight:'600'}}>Result: {h.result.top_class}</span>}
+                      {h.result?.num_detections !== undefined && <span>Detectados: {h.result.num_detections}</span>}
+                    </div>
                   </div>
                 </div>
               ))}
