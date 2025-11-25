@@ -5,7 +5,16 @@ import { UploadZone } from '../Shared/UploadZone';
 import { ResultCard } from '../Results/ResultCard';
 import { ConfidenceBar } from '../Results/ConfidenceBar';
 
-const API_URL = 'http://localhost:5000/api';
+// Detectamos si estamos en "localhost" o en la web real
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
+// Si es local usa el 5000, si es web usa Render (URL fija)
+const API_URL = isLocal 
+  ? 'http://localhost:5000/api' 
+  : 'https://tomato-backend-2giv.onrender.com/api';
+
+console.log("🌍 Entorno detectado:", isLocal ? "Local" : "Producción");
+console.log("🔗 Conectando a:", API_URL);
 
 export function ClassificationView({ models }) {
   const [file, setFile] = useState(null);
