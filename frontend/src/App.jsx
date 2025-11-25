@@ -12,7 +12,7 @@ const isLocal = window.location.hostname === 'localhost' || window.location.host
 // Si es local usa el 5000, si es web usa Render (URL fija)
 const API_URL = isLocal 
   ? 'http://localhost:5000/api' 
-  : 'https://tomato-backend-2giv.onrender.com/api';
+  : 'https://leandroramirezz-tomato-backend.hf.space/api';
 
 console.log("🌍 Entorno detectado:", isLocal ? "Local" : "Producción");
 console.log("🔗 Conectando a:", API_URL);
