@@ -1,0 +1,32 @@
+{
+  "model": "YOLOv11n-seg",
+  "dataset": {
+    "source": "Roboflow",
+    "classes": [
+      "tomato"
+    ],
+    "num_classes": 1,
+    "total_images": 100,
+    "splits": {
+      "train": 70,
+      "val": 15,
+      "test": 15
+    }
+  },
+  "training": {
+    "epochs": 100,
+    "img_size": 640,
+    "batch_size": 16
+  },
+  "metrics": {
+    "box_map50": 0.590276740861579,
+    "box_map50_95": 0.5666388119592551,
+    "mask_map50": 0.6459953851079631,
+    "mask_map50_95": 0.5843439908003895,
+    "box_precision": 0.8182381878915946,
+    "box_recall": 0.6363636363636364,
+    "mask_precision": 0.8766837727409943,
+    "mask_recall": 0.6818181818181818
+  },
+  "date": "/content/drive/MyDrive/tomato_yolo_segmentation"
+}
