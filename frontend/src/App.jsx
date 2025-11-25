@@ -6,11 +6,16 @@ import { SegmentationView } from './components/Views/SegmentationView';
 import { ComparisonView } from './components/Views/ComparisonView';
 import { HistoryView } from './components/Views/HistoryView';
 
-console.log("Ambiente:", import.meta.env.MODE);
-console.log("API URL detectada:", import.meta.env.VITE_API_URL);
+// Detectamos si estamos en "localhost" o en la web real
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
 
-// URL del Backend
-const API_URL = 'http://localhost:5000/api';
+// Si es local usa el 5000, si es web usa Render (URL fija)
+const API_URL = isLocal 
+  ? 'http://localhost:5000/api' 
+  : 'https://tomato-backend-2giv.onrender.com/api';
+
+console.log("🌍 Entorno detectado:", isLocal ? "Local" : "Producción");
+console.log("🔗 Conectando a:", API_URL);
 
 function App() {
   const [activeTab, setActiveTab] = useState('classification');
