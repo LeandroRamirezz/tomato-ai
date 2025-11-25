@@ -18,13 +18,12 @@ def health_check():
 
 @api.route('/models', methods=['GET'])
 def get_models():
-    models_list = []
-    for name, model in model_manager.classification_models.items():
-        models_list.append({
-            'name': name,
-            'type': 'classification',
-            'num_classes': len(model.classes)
-        })
+    # Devolvemos la lista estática porque no queremos cargar todo solo para listar
+    models_list = [
+        {'name': 'resnet50', 'type': 'classification', 'num_classes': 10}, # Ajusta num_classes si quieres
+        {'name': 'mobilenetv2', 'type': 'classification', 'num_classes': 10},
+        {'name': 'efficientnetb2', 'type': 'classification', 'num_classes': 10}
+    ]
     return jsonify({'classification_models': models_list})
 
 @api.route('/classify', methods=['POST'])
@@ -37,8 +36,10 @@ def classify_image():
     if model_name not in model_manager.classification_models:
         return jsonify({'error': 'Modelo no encontrado'}), 404
         
-    filepath = save_uploaded_file(file)
-    if not filepath: return jsonify({'error': 'Archivo inválido'}), 400
+    model = model_manager.get_classification_model(model_name)
+    
+    if not model:
+        return jsonify({'error': 'Modelo no disponible o falló al cargar'}), 503
     
     try:
         start = time.time()
@@ -90,10 +91,12 @@ def compare_models():
         comparisons = {}
         
         # Iterar sobre todos los modelos cargados en el manager
-        for model_name, model in model_manager.classification_models.items():
-            # Usamos el método predict que ya definimos en model_service
-            result = model.predict(filepath, top_k=top_k)
-            comparisons[model_name] = result
+        model_names = ['resnet50', 'mobilenetv2', 'efficientnetb2']
+        for name in model_names:
+            model = model_manager.get_classification_model(name)
+            if model:
+                result = model.predict(filepath, top_k=top_k)
+                comparisons[name] = result
             
         elapsed = time.time() - start
         
@@ -122,7 +125,8 @@ def compare_models():
 @api.route('/segment', methods=['POST'])
 def segment_image():
     """Ruta para segmentación con YOLO"""
-    if not model_manager.segmentation_model:
+    yolo = model_manager.get_segmentation_model()
+    if not yolo:
         return jsonify({'error': 'Modelo de segmentación no disponible'}), 503
 
     if 'file' not in request.files:
