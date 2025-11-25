@@ -6,6 +6,9 @@ import { SegmentationView } from './components/Views/SegmentationView';
 import { ComparisonView } from './components/Views/ComparisonView';
 import { HistoryView } from './components/Views/HistoryView';
 
+console.log("Ambiente:", import.meta.env.MODE);
+console.log("API URL detectada:", import.meta.env.VITE_API_URL);
+
 // URL del Backend
 const API_URL = 'http://localhost:5000/api';
 
